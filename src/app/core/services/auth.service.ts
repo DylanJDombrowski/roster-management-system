@@ -41,20 +41,69 @@ export class AuthService {
   }
 
   private async fetchUserProfile(userId: string): Promise<void> {
-    const { data, error } = await this.supabaseService.client
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    console.log('Fetching profile for user ID:', userId); // Add this log
 
-    if (error) {
-      console.error('Error fetching user profile:', error);
+    try {
+      // This is the correct way to query by ID
+      const { data, error } = await this.supabaseService.client
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+
+        // If the profile doesn't exist, we could create it automatically
+        if (error.code === 'PGRST116') {
+          console.log('No profile found. Creating a default profile...');
+
+          // Get user email from auth
+          const { data: userData } =
+            await this.supabaseService.client.auth.getUser();
+          if (userData?.user) {
+            const email = userData.user.email || '';
+
+            // Insert a default profile
+            const { data: newProfile, error: insertError } =
+              await this.supabaseService.client
+                .from('profiles')
+                .insert([
+                  {
+                    id: userId,
+                    first_name: 'New',
+                    last_name: 'User',
+                    email: email,
+                    role: 'admin', // Default to admin for testing
+                  },
+                ])
+                .select()
+                .single();
+
+            if (insertError) {
+              console.error('Error creating default profile:', insertError);
+            } else if (newProfile) {
+              console.log('Created default profile:', newProfile);
+              this.currentUserSubject.next(newProfile as UserProfile);
+              return;
+            }
+          }
+        }
+
+        this.currentUserSubject.next(null);
+        return;
+      }
+
+      if (data) {
+        console.log('Profile found:', data);
+        this.currentUserSubject.next(data as UserProfile);
+      } else {
+        console.log('No data returned but no error either');
+        this.currentUserSubject.next(null);
+      }
+    } catch (err) {
+      console.error('Unexpected error in fetchUserProfile:', err);
       this.currentUserSubject.next(null);
-      return;
-    }
-
-    if (data) {
-      this.currentUserSubject.next(data as UserProfile);
     }
   }
 
