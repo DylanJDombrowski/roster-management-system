@@ -1,9 +1,12 @@
 // src/app/features/dashboard/dashboard.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PlayersService } from '../../core/services/players.service';
+import { TeamsService } from '../../core/services/teams.service';
 import { AuthService } from '../../core/services/auth.service';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,9 +14,23 @@ import { AuthService } from '../../core/services/auth.service';
   imports: [CommonModule, RouterModule],
   template: `
     <div class="dashboard-container">
-      <h1>Dashboard</h1>
+      <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <p *ngIf="authService.currentUser$ | async as user">
+          Welcome, {{ user.first_name }} {{ user.last_name }}
+        </p>
+      </div>
 
-      <div class="stats-cards">
+      <div class="error-message" *ngIf="errorMessage">
+        <p>{{ errorMessage }}</p>
+        <button (click)="loadData()" class="btn">Retry</button>
+      </div>
+
+      <div class="loading-indicator" *ngIf="isLoading">
+        <p>Loading dashboard data...</p>
+      </div>
+
+      <div class="stats-cards" *ngIf="!isLoading">
         <div class="card">
           <h2>Players</h2>
           <p class="stat">{{ playerCount }}</p>
@@ -45,8 +62,30 @@ import { AuthService } from '../../core/services/auth.service';
         margin: 0 auto;
       }
 
-      h1 {
+      .dashboard-header {
+        margin-bottom: 2rem;
+      }
+
+      .dashboard-header h1 {
+        margin-bottom: 0.5rem;
+      }
+
+      .dashboard-header p {
+        color: #666;
+        font-size: 1.1rem;
+      }
+
+      .error-message {
+        padding: 1rem;
+        background-color: #ffebee;
+        border-radius: 4px;
+        color: #c62828;
         margin-bottom: 1.5rem;
+      }
+
+      .loading-indicator {
+        text-align: center;
+        padding: 2rem;
       }
 
       .stats-cards {
@@ -74,6 +113,10 @@ import { AuthService } from '../../core/services/auth.service';
         margin-top: 2rem;
       }
 
+      .admin-section h2 {
+        margin-bottom: 1rem;
+      }
+
       .btn {
         display: inline-block;
         background-color: #1976d2;
@@ -82,27 +125,71 @@ import { AuthService } from '../../core/services/auth.service';
         border-radius: 4px;
         text-decoration: none;
         text-align: center;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+
+      @media (max-width: 768px) {
+        .stats-cards {
+          grid-template-columns: 1fr;
+        }
       }
     `,
   ],
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   playerCount = 0;
   teamCount = 0;
+  isLoading = false;
+  errorMessage = '';
+  private subscription = new Subscription();
 
   constructor(
     private playersService: PlayersService,
-    public authService: AuthService // We'll need to add TeamsService later
+    private teamsService: TeamsService,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    // Get player count
-    this.playersService.fetchPlayers().subscribe((players) => {
-      this.playerCount = players.length;
+    this.loadData();
+  }
+
+  loadData(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    // Load both player and team data in parallel
+    const sub = forkJoin({
+      players: this.playersService.fetchPlayers().pipe(
+        catchError((err) => {
+          console.error('Error loading players', err);
+          return of([]);
+        })
+      ),
+      teams: this.teamsService.fetchTeams().pipe(
+        catchError((err) => {
+          console.error('Error loading teams', err);
+          return of([]);
+        })
+      ),
+    }).subscribe({
+      next: ({ players, teams }) => {
+        this.playerCount = players.length;
+        this.teamCount = teams.length;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading dashboard data', err);
+        this.errorMessage = 'Failed to load dashboard data. Please try again.';
+        this.isLoading = false;
+      },
     });
 
-    // Note: We'll need to implement TeamsService and fetch team count
-    // For now, we're just showing a placeholder
-    this.teamCount = 0;
+    this.subscription.add(sub);
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 }

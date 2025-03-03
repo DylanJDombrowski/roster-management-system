@@ -1,9 +1,14 @@
 // src/app/features/teams/team-detail/team-detail.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { Team } from '../../../core/models/team.model';
+import { Team, TeamCoach } from '../../../core/models/team.model';
+import { Player } from '../../../core/models/player.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { TeamsService } from '../../../core/services/teams.service';
+import { PlayersService } from '../../../core/services/players.service';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-team-detail',
@@ -53,6 +58,24 @@ import { AuthService } from '../../../core/services/auth.service';
               <h2>About</h2>
               <p>{{ team.description }}</p>
             </div>
+
+            <div class="coaches-section" *ngIf="coaches.length > 0">
+              <h2>Coaching Staff</h2>
+              <div class="coaches-list">
+                <div class="coach-item" *ngFor="let coach of coaches">
+                  <div class="coach-name">
+                    {{ coach.profile?.first_name }}
+                    {{ coach.profile?.last_name }}
+                    <span class="coach-badge" *ngIf="coach.is_head_coach"
+                      >Head Coach</span
+                    >
+                  </div>
+                  <div class="coach-email" *ngIf="coach.profile?.email">
+                    {{ coach.profile?.email }}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -66,15 +89,70 @@ import { AuthService } from '../../../core/services/auth.service';
             >
           </div>
 
-          <!-- This will be replaced with actual roster data -->
-          <div class="roster-preview">
+          <div class="roster-preview" *ngIf="isLoadingPlayers">
+            <p>Loading roster...</p>
+          </div>
+
+          <div
+            class="roster-preview"
+            *ngIf="!isLoadingPlayers && players.length > 0"
+          >
+            <div class="roster-stats">
+              <div class="stat-item">
+                <span class="stat-value">{{ players.length }}</span>
+                <span class="stat-label">Players</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ getActivePlayerCount() }}</span>
+                <span class="stat-label">Active</span>
+              </div>
+            </div>
+
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>#</th>
+                  <th>Position</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="let player of players.slice(0, 5)"
+                  [routerLink]="['/players', player.id]"
+                  class="clickable-row"
+                >
+                  <td>{{ player.first_name }} {{ player.last_name }}</td>
+                  <td>{{ player.jersey_number || '-' }}</td>
+                  <td>{{ player.primary_position || '-' }}</td>
+                  <td>
+                    <span class="status-badge" [class]="player.status">
+                      {{ player.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="more-players" *ngIf="players.length > 5">
+              <a [routerLink]="['/teams', team.id, 'roster']">
+                View all {{ players.length }} players
+              </a>
+            </div>
+          </div>
+
+          <div
+            class="roster-preview empty-roster"
+            *ngIf="!isLoadingPlayers && players.length === 0"
+          >
             <p class="empty-message">No players assigned to this team yet.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="loading-state" *ngIf="!team && !error">
+    <div class="loading-state" *ngIf="isLoading && !error">
       <p>Loading team information...</p>
     </div>
 
@@ -203,6 +281,43 @@ import { AuthService } from '../../../core/services/auth.service';
         color: #444;
       }
 
+      .coaches-section {
+        margin-top: 1.5rem;
+      }
+
+      .coaches-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .coach-item {
+        padding: 0.75rem;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+      }
+
+      .coach-name {
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .coach-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        background-color: #bbdefb;
+        color: #1976d2;
+        border-radius: 4px;
+      }
+
+      .coach-email {
+        font-size: 0.875rem;
+        color: #666;
+        margin-top: 0.25rem;
+      }
+
       .roster-header {
         display: flex;
         justify-content: space-between;
@@ -211,16 +326,97 @@ import { AuthService } from '../../../core/services/auth.service';
       }
 
       .roster-preview {
-        padding: 2rem;
+        padding: 1rem;
         background-color: #f9f9f9;
         border-radius: 4px;
-        text-align: center;
       }
 
       .empty-message {
         color: #666;
         font-style: italic;
         margin: 0;
+        text-align: center;
+        padding: 2rem 0;
+      }
+
+      .roster-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #1976d2;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .roster-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+      }
+
+      .roster-table th,
+      .roster-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .roster-table th {
+        font-weight: 500;
+        color: #666;
+      }
+
+      .clickable-row {
+        cursor: pointer;
+      }
+
+      .clickable-row:hover {
+        background-color: #f5f5f5;
+      }
+
+      .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+      }
+
+      .status-badge.active {
+        background-color: #c8e6c9;
+        color: #2e7d32;
+      }
+
+      .status-badge.inactive {
+        background-color: #ffcdd2;
+        color: #c62828;
+      }
+
+      .status-badge.injured {
+        background-color: #fff9c4;
+        color: #f57f17;
+      }
+
+      .more-players {
+        text-align: center;
+        margin-top: 1rem;
+      }
+
+      .more-players a {
+        color: #1976d2;
+        text-decoration: none;
       }
 
       .loading-state,
@@ -251,13 +447,20 @@ import { AuthService } from '../../../core/services/auth.service';
     `,
   ],
 })
-export class TeamDetailComponent implements OnInit {
+export class TeamDetailComponent implements OnInit, OnDestroy {
   team: Team | null = null;
+  coaches: TeamCoach[] = [];
+  players: Player[] = [];
   error: string | null = null;
+  isLoading = false;
+  isLoadingPlayers = false;
+  private subscription = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private teamsService: TeamsService,
+    private playersService: PlayersService,
     public authService: AuthService
   ) {}
 
@@ -271,37 +474,99 @@ export class TeamDetailComponent implements OnInit {
   }
 
   loadTeam(id: string): void {
-    // For now, we'll use mock data until we implement the TeamsService
-    if (id === '1') {
-      this.team = {
-        id: '1',
-        name: '16U',
-        display_name: 'Lightning 16U',
-        description: 'Our 16 and under competitive team',
-        is_active: true,
-        season_year: 2025,
-        age_group: '16U',
-      };
-    } else if (id === '2') {
-      this.team = {
-        id: '2',
-        name: '18U',
-        display_name: 'Lightning 18U',
-        description: 'Our 18 and under competitive team',
-        is_active: true,
-        season_year: 2025,
-        age_group: '18U',
-      };
-    } else {
-      this.error = 'Team not found';
-    }
+    this.isLoading = true;
+    this.error = null;
+
+    const sub = this.teamsService
+      .getTeam(id)
+      .pipe(
+        catchError((err) => {
+          console.error('Error loading team', err);
+          this.error = 'Failed to load team information. Please try again.';
+          this.isLoading = false;
+          return of(null);
+        })
+      )
+      .subscribe((team) => {
+        if (team) {
+          this.team = team;
+          this.isLoading = false;
+
+          // Now load coaches and players
+          this.loadCoaches(id);
+          this.loadPlayers(id);
+        }
+      });
+
+    this.subscription.add(sub);
+  }
+
+  loadCoaches(teamId: string): void {
+    const sub = this.teamsService
+      .getTeamCoaches(teamId)
+      .pipe(
+        catchError((err) => {
+          console.error('Error loading coaches', err);
+          return of([]);
+        })
+      )
+      .subscribe((coaches) => {
+        this.coaches = coaches;
+      });
+
+    this.subscription.add(sub);
+  }
+
+  loadPlayers(teamId: string): void {
+    this.isLoadingPlayers = true;
+
+    const sub = this.teamsService
+      .getTeamPlayers(teamId)
+      .pipe(
+        catchError((err) => {
+          console.error('Error loading team players', err);
+          return of([]);
+        })
+      )
+      .subscribe((teamPlayers) => {
+        // Extract player data from the response
+        this.players = teamPlayers.map((tp) => tp.players);
+        this.isLoadingPlayers = false;
+      });
+
+    this.subscription.add(sub);
+  }
+
+  getActivePlayerCount(): number {
+    return this.players.filter((p) => p.status === 'active').length;
   }
 
   confirmDelete(): void {
-    if (confirm('Are you sure you want to delete this team?')) {
-      // In a real implementation, we would call a delete method on the service
-      // For now, just navigate back to the team list
-      alert('Delete functionality will be implemented in the future.');
+    if (!this.team) return;
+
+    if (
+      confirm(
+        `Are you sure you want to delete the team "${this.team.display_name}"?`
+      )
+    ) {
+      this.isLoading = true;
+
+      const sub = this.teamsService.deleteTeam(this.team.id).subscribe({
+        next: () => {
+          this.router.navigate(['/teams']);
+        },
+        error: (err) => {
+          console.error('Error deleting team', err);
+          this.error = 'Failed to delete team. Please try again.';
+          this.isLoading = false;
+        },
+      });
+
+      this.subscription.add(sub);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 }

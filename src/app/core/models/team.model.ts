@@ -1,6 +1,4 @@
-import { Player } from './player.model';
-import { UserProfile } from './user.model';
-
+// src/app/core/models/team.model.ts
 export interface Team {
   id: string;
   name: string;
@@ -13,19 +11,6 @@ export interface Team {
   updated_at?: string;
 }
 
-export interface TeamPlayer {
-  id: string;
-  team_id: string;
-  player_id: string;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-
-  // These could be included with joins
-  player?: Player;
-  team?: Team;
-}
-
 export interface TeamCoach {
   id: string;
   team_id: string;
@@ -33,8 +18,21 @@ export interface TeamCoach {
   is_head_coach: boolean;
   created_at?: string;
   updated_at?: string;
+  profile?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    role: string;
+  };
+}
 
-  // These could be included with joins
-  profile?: UserProfile;
-  team?: Team;
+export interface TeamPlayer {
+  id: string;
+  team_id: string;
+  player_id: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  player?: any;
 }

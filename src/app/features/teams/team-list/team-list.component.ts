@@ -1,14 +1,17 @@
 // src/app/features/teams/team-list/team-list.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { TeamsService } from '../../../core/services/teams.service';
 import { Team } from '../../../core/models/team.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-team-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="team-list-container">
       <div class="header">
@@ -18,8 +21,45 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
       </div>
 
-      <div class="teams-grid" *ngIf="teams.length > 0">
-        <div class="team-card" *ngFor="let team of teams">
+      <div class="filters">
+        <div class="search">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilters()"
+            placeholder="Search teams..."
+            class="search-input"
+          />
+        </div>
+
+        <div class="status-filter">
+          <label for="status">Status:</label>
+          <select
+            id="status"
+            [(ngModel)]="statusFilter"
+            (ngModelChange)="applyFilters()"
+          >
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="loading-indicator" *ngIf="isLoading">
+        <p>Loading teams...</p>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        <p>{{ errorMessage }}</p>
+        <button (click)="loadTeams()" class="btn">Retry</button>
+      </div>
+
+      <div
+        class="teams-grid"
+        *ngIf="!isLoading && !errorMessage && filteredTeams.length > 0"
+      >
+        <div class="team-card" *ngFor="let team of filteredTeams">
           <div class="team-info">
             <h2>{{ team.display_name }}</h2>
             <p class="team-description" *ngIf="team.description">
@@ -58,19 +98,23 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
       </div>
 
-      <div class="empty-state" *ngIf="teams.length === 0">
+      <div
+        class="empty-state"
+        *ngIf="!isLoading && !errorMessage && filteredTeams.length === 0"
+      >
         <p>
-          No teams found.
           {{
-            authService.isAdmin()
-              ? 'Add your first team to get started.'
-              : 'Please check back later.'
+            teams.length === 0
+              ? authService.isAdmin()
+                ? 'No teams found. Add your first team to get started.'
+                : 'No teams found. Please check back later.'
+              : 'No teams match your search criteria.'
           }}
         </p>
         <a
           routerLink="/teams/new"
           class="btn btn-add"
-          *ngIf="authService.isAdmin()"
+          *ngIf="authService.isAdmin() && teams.length === 0"
           >+ Add Team</a
         >
       </div>
@@ -96,6 +140,35 @@ import { AuthService } from '../../../core/services/auth.service';
         padding: 0.5rem 1rem;
         border-radius: 4px;
         text-decoration: none;
+      }
+
+      .filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .search {
+        flex: 1;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 0.625rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .status-filter {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .status-filter select {
+        padding: 0.625rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
       }
 
       .teams-grid {
@@ -184,6 +257,24 @@ import { AuthService } from '../../../core/services/auth.service';
         color: white;
       }
 
+      .loading-indicator {
+        padding: 2rem;
+        text-align: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .error-message {
+        padding: 2rem;
+        text-align: center;
+        background-color: #ffebee;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        color: #c62828;
+        margin-bottom: 1.5rem;
+      }
+
       .empty-state {
         text-align: center;
         padding: 3rem;
@@ -196,36 +287,77 @@ import { AuthService } from '../../../core/services/auth.service';
         .teams-grid {
           grid-template-columns: 1fr;
         }
+
+        .filters {
+          flex-direction: column;
+        }
       }
     `,
   ],
 })
-export class TeamListComponent implements OnInit {
+export class TeamListComponent implements OnInit, OnDestroy {
   teams: Team[] = [];
+  filteredTeams: Team[] = [];
+  searchTerm = '';
+  statusFilter = 'all';
+  isLoading = false;
+  errorMessage = '';
+  private subscription = new Subscription();
 
-  constructor(public authService: AuthService) {}
+  constructor(
+    private teamsService: TeamsService,
+    public authService: AuthService
+  ) {}
 
   ngOnInit(): void {
-    // For now, we'll use mock data until we implement the TeamsService
-    this.teams = [
-      {
-        id: '1',
-        name: '16U',
-        display_name: 'Lightning 16U',
-        description: 'Our 16 and under competitive team',
-        is_active: true,
-        season_year: 2025,
-        age_group: '16U',
+    this.loadTeams();
+  }
+
+  loadTeams(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    const sub = this.teamsService.fetchTeams().subscribe({
+      next: (teams) => {
+        this.teams = teams;
+        this.applyFilters();
+        this.isLoading = false;
       },
-      {
-        id: '2',
-        name: '18U',
-        display_name: 'Lightning 18U',
-        description: 'Our 18 and under competitive team',
-        is_active: true,
-        season_year: 2025,
-        age_group: '18U',
+      error: (err) => {
+        console.error('Error loading teams', err);
+        this.errorMessage = 'Failed to load teams. Please try again.';
+        this.isLoading = false;
       },
-    ];
+    });
+
+    this.subscription.add(sub);
+  }
+
+  applyFilters(): void {
+    let result = this.teams;
+
+    // Apply status filter
+    if (this.statusFilter === 'active') {
+      result = result.filter((t) => t.is_active);
+    } else if (this.statusFilter === 'inactive') {
+      result = result.filter((t) => !t.is_active);
+    }
+
+    // Apply search filter
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.name.toLowerCase().includes(term) ||
+          t.display_name.toLowerCase().includes(term) ||
+          (t.description && t.description.toLowerCase().includes(term))
+      );
+    }
+
+    this.filteredTeams = result;
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 }

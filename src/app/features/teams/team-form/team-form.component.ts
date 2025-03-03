@@ -1,5 +1,5 @@
 // src/app/features/teams/team-form/team-form.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -8,7 +8,9 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Team } from '../../../core/models/team.model';
+import { TeamsService } from '../../../core/services/teams.service';
+import { Subscription } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-team-form',
@@ -18,6 +20,10 @@ import { Team } from '../../../core/models/team.model';
     <div class="team-form-container">
       <div class="header">
         <h1>{{ isEdit ? 'Edit Team' : 'Add New Team' }}</h1>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        <p>{{ errorMessage }}</p>
       </div>
 
       <form [formGroup]="teamForm" (ngSubmit)="onSubmit()" class="form">
@@ -127,6 +133,14 @@ import { Team } from '../../../core/models/team.model';
       }
 
       .header {
+        margin-bottom: 1.5rem;
+      }
+
+      .error-message {
+        padding: 1rem;
+        background-color: #ffebee;
+        border-radius: 4px;
+        color: #c62828;
         margin-bottom: 1.5rem;
       }
 
@@ -240,16 +254,19 @@ import { Team } from '../../../core/models/team.model';
     `,
   ],
 })
-export class TeamFormComponent implements OnInit {
+export class TeamFormComponent implements OnInit, OnDestroy {
   teamForm: FormGroup;
   isEdit = false;
   teamId: string | null = null;
   isSubmitting = false;
+  errorMessage = '';
+  private subscription = new Subscription();
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private teamsService: TeamsService
   ) {
     this.teamForm = this.createForm();
   }
@@ -260,17 +277,7 @@ export class TeamFormComponent implements OnInit {
     this.isEdit = !!this.teamId;
 
     if (this.isEdit && this.teamId) {
-      // For now, we'll use mock data until we implement the TeamsService
-      if (this.teamId === '1') {
-        this.teamForm.patchValue({
-          name: '16U',
-          display_name: 'Lightning 16U',
-          description: 'Our 16 and under competitive team',
-          is_active: true,
-          season_year: 2025,
-          age_group: '16U',
-        });
-      }
+      this.loadTeam(this.teamId);
     }
   }
 
@@ -285,6 +292,28 @@ export class TeamFormComponent implements OnInit {
     });
   }
 
+  loadTeam(id: string): void {
+    const sub = this.teamsService.getTeam(id).subscribe({
+      next: (team) => {
+        this.teamForm.patchValue({
+          name: team.name,
+          display_name: team.display_name,
+          description: team.description || '',
+          season_year: team.season_year || new Date().getFullYear(),
+          age_group: team.age_group || '',
+          is_active: team.is_active,
+        });
+      },
+      error: (err) => {
+        console.error('Error loading team', err);
+        this.errorMessage =
+          'Failed to load team information. Please try again.';
+      },
+    });
+
+    this.subscription.add(sub);
+  }
+
   onSubmit(): void {
     if (this.teamForm.invalid) {
       this.teamForm.markAllAsTouched();
@@ -292,15 +321,33 @@ export class TeamFormComponent implements OnInit {
     }
 
     this.isSubmitting = true;
+    this.errorMessage = '';
     const teamData = this.teamForm.value;
 
-    // For now, we'll just simulate a successful save
-    setTimeout(() => {
-      this.router.navigate(['/teams']);
-    }, 1000);
+    const action =
+      this.isEdit && this.teamId
+        ? this.teamsService.updateTeam(this.teamId, teamData)
+        : this.teamsService.createTeam(teamData);
+
+    const sub = action.subscribe({
+      next: () => {
+        this.router.navigate(['/teams']);
+      },
+      error: (err) => {
+        console.error('Error saving team', err);
+        this.errorMessage = 'Failed to save team. Please try again.';
+        this.isSubmitting = false;
+      },
+    });
+
+    this.subscription.add(sub);
   }
 
   goBack(): void {
     this.router.navigate(['/teams']);
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 }
