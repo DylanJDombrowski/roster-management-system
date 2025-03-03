@@ -38,6 +38,7 @@ export const ADMIN_ROUTES: Routes = [
     canActivate: [AuthGuard],
     data: { roles: ['admin'] },
   },
+
   {
     path: 'users/:id/edit',
     loadComponent: () =>
