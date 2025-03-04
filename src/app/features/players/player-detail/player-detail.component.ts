@@ -1,10 +1,11 @@
 // src/app/features/players/player-detail/player-detail.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { PlayersService } from '../../../core/services/players.service';
 import { Player } from '../../../core/models/player.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-player-detail',
@@ -109,7 +110,33 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- This section will be expanded later to show team assignments -->
         <div class="teams-section">
           <h2>Team Assignments</h2>
-          <p class="empty-message">No team assignments yet.</p>
+          <div *ngIf="isLoadingTeams" class="loading-message">
+            Loading team assignments...
+          </div>
+          <div
+            *ngIf="
+              !isLoadingTeams &&
+              (!teamAssignments || teamAssignments.length === 0)
+            "
+            class="empty-message"
+          >
+            No team assignments yet.
+          </div>
+          <div
+            *ngIf="
+              !isLoadingTeams && teamAssignments && teamAssignments.length > 0
+            "
+            class="teams-list"
+          >
+            <div *ngFor="let assignment of teamAssignments" class="team-item">
+              <span class="team-name">{{ assignment.teams.display_name }}</span>
+              <a
+                [routerLink]="['/teams', assignment.team_id]"
+                class="view-team-link"
+                >View Team</a
+              >
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -302,6 +329,38 @@ import { AuthService } from '../../../core/services/auth.service';
       .error-state {
         color: #d32f2f;
       }
+      .teams-list {
+        margin-top: 1rem;
+      }
+
+      .team-item {
+        padding: 0.75rem;
+        border-radius: 4px;
+        background-color: #f5f5f5;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .team-name {
+        font-weight: 500;
+      }
+
+      .view-team-link {
+        color: #1976d2;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+
+      .view-team-link:hover {
+        text-decoration: underline;
+      }
+
+      .loading-message {
+        font-style: italic;
+        color: #666;
+      }
 
       @media (max-width: 768px) {
         .player-content {
@@ -317,10 +376,13 @@ import { AuthService } from '../../../core/services/auth.service';
     `,
   ],
 })
-export class PlayerDetailComponent implements OnInit {
+export class PlayerDetailComponent implements OnInit, OnDestroy {
   player: Player | null = null;
   photoUrl: string | null = null;
   error: string | null = null;
+  teamAssignments: any[] = [];
+  isLoadingTeams = false;
+  private subscriptions = new Subscription();
 
   constructor(
     private playersService: PlayersService,
@@ -333,13 +395,14 @@ export class PlayerDetailComponent implements OnInit {
     const playerId = this.route.snapshot.paramMap.get('id');
     if (playerId) {
       this.loadPlayer(playerId);
+      this.loadPlayerTeams(playerId);
     } else {
       this.error = 'No player ID provided';
     }
   }
 
   loadPlayer(id: string): void {
-    this.playersService.getPlayer(id).subscribe({
+    const sub = this.playersService.getPlayer(id).subscribe({
       next: (player) => {
         this.player = player;
         // In a real implementation, we would also load the player's photo
@@ -350,14 +413,26 @@ export class PlayerDetailComponent implements OnInit {
         this.error = 'Failed to load player information. Please try again.';
       },
     });
+    this.subscriptions.add(sub);
   }
 
-  // This would be implemented to load the player's photo
-  // loadPlayerPhoto(playerId: string): void {
-  //   this.playersService.getPlayerPrimaryPhotoUrl(playerId).subscribe(url => {
-  //     this.photoUrl = url;
-  //   });
-  // }
+  loadPlayerTeams(playerId: string): void {
+    this.isLoadingTeams = true;
+    const sub = this.playersService
+      .getPlayerTeamsWithDetails(playerId)
+      .subscribe({
+        next: (teamAssignments) => {
+          console.log('Team assignments loaded:', teamAssignments);
+          this.teamAssignments = teamAssignments;
+          this.isLoadingTeams = false;
+        },
+        error: (err) => {
+          console.error('Error loading team assignments', err);
+          this.isLoadingTeams = false;
+        },
+      });
+    this.subscriptions.add(sub);
+  }
 
   getInitials(): string {
     if (!this.player) return '';
@@ -407,5 +482,10 @@ export class PlayerDetailComponent implements OnInit {
       // For now, just navigate back to the player list
       alert('Delete functionality will be implemented in the future.');
     }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscriptions to prevent memory leaks
+    this.subscriptions.unsubscribe();
   }
 }

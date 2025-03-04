@@ -101,7 +101,13 @@ export class AuthService {
         console.log('No data returned but no error either');
         this.currentUserSubject.next(null);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'NavigatorLockAcquireTimeoutError') {
+        console.warn('Auth lock error occurred. Retrying...');
+        // Retry after a short delay
+        setTimeout(() => this.fetchUserProfile(userId), 500);
+        return;
+      }
       console.error('Unexpected error in fetchUserProfile:', err);
       this.currentUserSubject.next(null);
     }

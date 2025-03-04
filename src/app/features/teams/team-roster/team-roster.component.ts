@@ -15,7 +15,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 @Component({
   selector: 'app-team-roster',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, PlayerCardComponent],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="team-roster-container" *ngIf="team">
       <div class="header">

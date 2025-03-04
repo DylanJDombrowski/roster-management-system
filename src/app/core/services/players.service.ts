@@ -292,4 +292,27 @@ export class PlayersService {
       })
     );
   }
+
+  getPlayerTeamsWithDetails(playerId: string): Observable<any[]> {
+    return from(
+      this.supabaseService.client
+        .from('team_players')
+        .select(
+          `
+        id,
+        team_id,
+        teams:team_id (id, name, display_name)
+      `
+        )
+        .eq('player_id', playerId)
+        .eq('is_active', true)
+    ).pipe(
+      map(({ data, error }) => {
+        if (error) {
+          throw error;
+        }
+        return data;
+      })
+    );
+  }
 }
