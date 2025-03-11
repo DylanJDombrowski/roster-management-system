@@ -10,6 +10,8 @@ export class SupabaseService {
   private supabase: SupabaseClient;
 
   constructor() {
+    console.log('Initializing Supabase client');
+
     this.supabase = createClient(
       environment.supabaseUrl,
       environment.supabaseKey,
@@ -18,22 +20,26 @@ export class SupabaseService {
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
+          storage: localStorage, // Explicitly set to localStorage
         },
       }
     );
 
-    // Set up global error handler for lock errors
-    window.addEventListener('error', (event) => {
-      if (
-        event.error &&
-        event.error.name === 'NavigatorLockAcquireTimeoutError'
-      ) {
-        console.warn(
-          'Auth lock error occurred. This is usually harmless and will resolve itself.'
-        );
-        // Prevent the error from bubbling up to the UI
-        event.preventDefault();
-      }
+    // Check if we have a session at initialization
+    this.supabase.auth.getSession().then(({ data }) => {
+      console.log(
+        'Initial Supabase session check:',
+        data.session ? 'Session exists' : 'No session found'
+      );
+    });
+
+    // Listen for auth changes
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      console.log(
+        'Supabase auth state change:',
+        event,
+        session ? 'With session' : 'No session'
+      );
     });
   }
 
