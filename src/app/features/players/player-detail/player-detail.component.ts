@@ -407,23 +407,29 @@ export class PlayerDetailComponent implements OnInit, OnDestroy {
     const playerId = this.route.snapshot.paramMap.get('id');
     if (playerId) {
       this.loadPlayer(playerId);
+      this.loadPlayerPhotos(playerId);
       this.loadPlayerTeams(playerId);
-
-      // Also load the player photos
-      this.playersService.getPlayerPhotos(playerId).subscribe({
-        next: (photos) => {
-          const primaryPhoto = photos.find((p) => p.is_primary);
-          if (primaryPhoto) {
-            this.primaryPhotoUrl = this.playersService.getPhotoPublicUrl(
-              primaryPhoto.storage_path
-            );
-          }
-        },
-        error: (err) => console.error('Error loading player photos', err),
-      });
     } else {
       this.error = 'No player ID provided';
     }
+  }
+
+  loadPlayerPhotos(playerId: string): void {
+    const sub = this.playersService.getPlayerPhotos(playerId).subscribe({
+      next: (photos) => {
+        const primaryPhoto = photos.find((p) => p.is_primary);
+        if (primaryPhoto) {
+          this.primaryPhotoUrl = this.playersService.getPhotoPublicUrl(
+            primaryPhoto.storage_path
+          );
+
+          // Also set the main photo URL for the player card
+          this.photoUrl = this.primaryPhotoUrl;
+        }
+      },
+      error: (err) => console.error('Error loading player photos', err),
+    });
+    this.subscriptions.add(sub);
   }
 
   loadPlayer(id: string): void {

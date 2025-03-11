@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PlayerPhoto } from '../../../core/models/player.model';
 import { PlayersService } from '../../../core/services/players.service';
+import { ImageCropperComponent } from 'ngx-image-cropper';
 
 @Component({
   selector: 'app-photo-upload',
@@ -285,6 +286,18 @@ export class PhotoUploadComponent {
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
+      // Check if the file is an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, GIF, etc.)');
+        return;
+      }
+
+      // Check file size (e.g., max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
       this.selectedFile = file;
       this.createPreview(file);
     }
@@ -327,6 +340,7 @@ export class PhotoUploadComponent {
   }
 
   // Upload the selected photo
+  // In photo-upload.component.ts
   uploadPhoto(): void {
     if (!this.selectedFile || !this.playerId) return;
 
@@ -346,11 +360,20 @@ export class PhotoUploadComponent {
         next: (photo) => {
           clearInterval(progressInterval);
           this.uploadProgress = 100;
+
+          // Add the URL to the photo object
+          const photoWithUrl = {
+            ...photo,
+            url: this.playersService.getPhotoPublicUrl(photo.storage_path),
+          };
+
           setTimeout(() => {
             this.isUploading = false;
             this.selectedFile = null;
             this.previewUrl = null;
-            this.photoUploaded.emit(photo);
+
+            // Emit the enhanced photo object
+            this.photoUploaded.emit(photoWithUrl);
           }, 500);
         },
         error: (error) => {
@@ -358,6 +381,7 @@ export class PhotoUploadComponent {
           this.isUploading = false;
           this.uploadProgress = 0;
           console.error('Upload failed', error);
+          alert('Failed to upload photo. Please try again.');
         },
       });
   }

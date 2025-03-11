@@ -132,7 +132,8 @@ export class PlayersService {
   }
 
   uploadPlayerPhoto(playerId: string, file: File): Observable<PlayerPhoto> {
-    const fileName = `${playerId}/${Date.now()}-${file.name}`;
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `${playerId}/${Date.now()}-${sanitizedFileName}`;
 
     return from(
       this.supabaseService.client.storage
@@ -144,22 +145,27 @@ export class PlayersService {
           throw error;
         }
 
-        // Add record to player_photos table
-        return from(
-          this.supabaseService.client
-            .from('player_photos')
-            .insert([
-              {
-                player_id: playerId,
-                storage_path: data?.path,
-                is_primary: false, // Default to false, we'll update if needed
-                uploaded_by: this.supabaseService.client.auth
-                  .getUser()
-                  .then((res) => res.data.user?.id),
-              },
-            ])
-            .select()
-            .single()
+        // First get the user ID
+        return from(this.supabaseService.client.auth.getUser()).pipe(
+          switchMap((userData) => {
+            const userId = userData.data.user?.id;
+
+            // Then insert the photo record
+            return from(
+              this.supabaseService.client
+                .from('player_photos')
+                .insert([
+                  {
+                    player_id: playerId,
+                    storage_path: data?.path,
+                    is_primary: false,
+                    uploaded_by: userId,
+                  },
+                ])
+                .select()
+                .single()
+            );
+          })
         );
       }),
       map(({ data, error }) => {

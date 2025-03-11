@@ -457,8 +457,16 @@ export class PlayerFormComponent implements OnInit, OnDestroy {
         : this.playersService.createPlayer(playerData);
 
     saveOperation.subscribe({
-      next: () => {
-        this.router.navigate(['/players']);
+      next: (player) => {
+        // If this was a new player, redirect to edit mode to add photos
+        if (!this.isEdit) {
+          this.router.navigate(['/players', player.id, 'edit']);
+        } else {
+          // For existing players being edited, stay on the same page
+          this.isSubmitting = false;
+          // Show a success message
+          alert('Player saved successfully!');
+        }
       },
       error: (err) => {
         console.error('Error saving player', err);
