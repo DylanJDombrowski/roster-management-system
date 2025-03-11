@@ -1,5 +1,5 @@
 // src/app/features/players/player-form/player-form.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -9,12 +9,14 @@ import {
 } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { PlayersService } from '../../../core/services/players.service';
-import { Player } from '../../../core/models/player.model';
+import { Player, PlayerPhoto } from '../../../core/models/player.model';
+import { PhotoUploadComponent } from '../../../shared/components/photo-upload/photo-upload.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-player-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PhotoUploadComponent],
   template: `
     <div class="player-form-container">
       <div class="header">
@@ -80,6 +82,23 @@ import { Player } from '../../../core/models/player.model';
                 </select>
               </div>
             </div>
+          </div>
+
+          <div class="photo-section" *ngIf="isEdit && playerId">
+            <h2>Player Photos</h2>
+            <p class="photo-hint">
+              Add or update player photos. The primary photo will be used for
+              player cards and roster displays.
+            </p>
+
+            <app-photo-upload
+              [playerId]="playerId"
+              [existingPhotos]="playerPhotos"
+              (photoUploaded)="onPhotoUploaded($event)"
+              (photoDeleted)="onPhotoDeleted($event)"
+              (primaryPhotoChanged)="onPrimaryPhotoChanged($event)"
+            >
+            </app-photo-upload>
           </div>
 
           <!-- Player Details -->
@@ -194,6 +213,11 @@ import { Player } from '../../../core/models/player.model';
           </button>
         </div>
       </form>
+      <div class="photo-message" *ngIf="!isEdit">
+        <p>
+          <strong>Note:</strong> Photos can be added after creating the player.
+        </p>
+      </div>
     </div>
   `,
   styles: [
@@ -296,6 +320,26 @@ import { Player } from '../../../core/models/player.model';
         cursor: not-allowed;
       }
 
+      /* Add these to your player-form.component.ts styles */
+      .photo-section {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .photo-hint {
+        color: #666;
+        margin-bottom: 1rem;
+      }
+
+      .photo-message {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        color: #666;
+      }
+
       @media (max-width: 768px) {
         .form-row {
           grid-template-columns: 1fr;
@@ -304,11 +348,13 @@ import { Player } from '../../../core/models/player.model';
     `,
   ],
 })
-export class PlayerFormComponent implements OnInit {
+export class PlayerFormComponent implements OnInit, OnDestroy {
   playerForm: FormGroup;
+  private subscriptions = new Subscription();
   isEdit = false;
   playerId: string | null = null;
   isSubmitting = false;
+  playerPhotos: PlayerPhoto[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -326,7 +372,50 @@ export class PlayerFormComponent implements OnInit {
 
     if (this.isEdit && this.playerId) {
       this.loadPlayer(this.playerId);
+      this.loadPlayerPhotos(this.playerId);
     }
+  }
+
+  loadPlayerPhotos(playerId: string): void {
+    const sub = this.playersService.getPlayerPhotos(playerId).subscribe({
+      next: (photos) => {
+        console.log('Player photos loaded:', photos);
+        // Add public URLs to the photos
+        this.playerPhotos = photos.map((photo) => ({
+          ...photo,
+          url: this.playersService.getPhotoPublicUrl(photo.storage_path),
+        }));
+      },
+      error: (err) => {
+        console.error('Error loading player photos', err);
+      },
+    });
+    this.subscriptions.add(sub);
+  }
+
+  onPhotoUploaded(photo: PlayerPhoto): void {
+    console.log('Photo uploaded:', photo);
+    // Add URL to the new photo
+    const photoWithUrl = {
+      ...photo,
+      url: this.playersService.getPhotoPublicUrl(photo.storage_path),
+    };
+    this.playerPhotos = [...this.playerPhotos, photoWithUrl];
+  }
+
+  onPhotoDeleted(photoId: string): void {
+    console.log('Photo deleted:', photoId);
+    this.playerPhotos = this.playerPhotos.filter(
+      (photo) => photo.id !== photoId
+    );
+  }
+
+  onPrimaryPhotoChanged(photoId: string): void {
+    console.log('Primary photo changed:', photoId);
+    this.playerPhotos = this.playerPhotos.map((photo) => ({
+      ...photo,
+      is_primary: photo.id === photoId,
+    }));
   }
 
   createForm(): FormGroup {
@@ -380,5 +469,9 @@ export class PlayerFormComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/players']);
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 }

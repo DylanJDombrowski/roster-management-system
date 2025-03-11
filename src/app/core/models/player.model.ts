@@ -20,6 +20,7 @@ export interface Player {
 }
 
 export interface PlayerPhoto {
+  url: string;
   id: string;
   player_id: string;
   storage_path: string;

@@ -315,4 +315,14 @@ export class PlayersService {
       })
     );
   }
+
+  getPhotoPublicUrl(storagePath: string): string {
+    if (!storagePath) return 'assets/placeholder-image.jpg';
+
+    const { data } = this.supabaseService.client.storage
+      .from('player-photos')
+      .getPublicUrl(storagePath);
+
+    return data?.publicUrl || 'assets/placeholder-image.jpg';
+  }
 }

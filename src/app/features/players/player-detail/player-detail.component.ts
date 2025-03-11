@@ -14,6 +14,17 @@ import { Subscription } from 'rxjs';
   template: `
     <div class="player-detail-container" *ngIf="player">
       <div class="header">
+        <!-- In the player header -->
+        <div class="player-photo">
+          <img
+            *ngIf="primaryPhotoUrl"
+            [src]="primaryPhotoUrl"
+            alt="{{ player.first_name }} {{ player.last_name }}"
+          />
+          <div *ngIf="!primaryPhotoUrl" class="initials">
+            {{ getInitials() }}
+          </div>
+        </div>
         <div>
           <h1>{{ player.first_name }} {{ player.last_name }}</h1>
           <div class="status-badge" [class]="player.status">
@@ -378,6 +389,7 @@ import { Subscription } from 'rxjs';
 })
 export class PlayerDetailComponent implements OnInit, OnDestroy {
   player: Player | null = null;
+  primaryPhotoUrl: string | null = null;
   photoUrl: string | null = null;
   error: string | null = null;
   teamAssignments: any[] = [];
@@ -396,6 +408,19 @@ export class PlayerDetailComponent implements OnInit, OnDestroy {
     if (playerId) {
       this.loadPlayer(playerId);
       this.loadPlayerTeams(playerId);
+
+      // Also load the player photos
+      this.playersService.getPlayerPhotos(playerId).subscribe({
+        next: (photos) => {
+          const primaryPhoto = photos.find((p) => p.is_primary);
+          if (primaryPhoto) {
+            this.primaryPhotoUrl = this.playersService.getPhotoPublicUrl(
+              primaryPhoto.storage_path
+            );
+          }
+        },
+        error: (err) => console.error('Error loading player photos', err),
+      });
     } else {
       this.error = 'No player ID provided';
     }
@@ -414,6 +439,18 @@ export class PlayerDetailComponent implements OnInit, OnDestroy {
       },
     });
     this.subscriptions.add(sub);
+
+    this.playersService.getPlayerPhotos(id).subscribe({
+      next: (photos) => {
+        const primaryPhoto = photos.find((p) => p.is_primary);
+        if (primaryPhoto) {
+          this.primaryPhotoUrl = this.playersService.getPhotoPublicUrl(
+            primaryPhoto.storage_path
+          );
+        }
+      },
+      error: (err) => console.error('Error loading player photos', err),
+    });
   }
 
   loadPlayerTeams(playerId: string): void {
