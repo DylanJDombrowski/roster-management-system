@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800">
+  <!-- Background and borders -->
+  <rect width="1000" height="800" fill="#f8f9fa" />
+  
+  <!-- Title -->
+  <text x="500" y="40" font-family="Arial" font-size="24" text-anchor="middle" font-weight="bold">Angular Softball Team Management System</text>
+  <text x="500" y="70" font-family="Arial" font-size="16" text-anchor="middle">Component Architecture Diagram</text>
+  
+  <!-- FRONTEND SECTION -->
+  <rect x="50" y="100" width="600" height="450" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="5" />
+  <text x="350" y="125" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Angular Frontend</text>
+  
+  <!-- Core Module -->
+  <rect x="80" y="150" width="180" height="120" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="5" />
+  <text x="170" y="170" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Core Module</text>
+  <rect x="100" y="180" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="197" font-family="Arial" font-size="12" text-anchor="middle">Authentication Service</text>
+  <rect x="100" y="210" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="227" font-family="Arial" font-size="12" text-anchor="middle">HTTP Interceptors</text>
+  <rect x="100" y="240" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="257" font-family="Arial" font-size="12" text-anchor="middle">Route Guards</text>
+  
+  <!-- Shared Module -->
+  <rect x="80" y="280" width="180" height="120" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="5" />
+  <text x="170" y="300" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Shared Module</text>
+  <rect x="100" y="310" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="327" font-family="Arial" font-size="12" text-anchor="middle">UI Components</text>
+  <rect x="100" y="340" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="357" font-family="Arial" font-size="12" text-anchor="middle">Directives & Pipes</text>
+  <rect x="100" y="370" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="387" font-family="Arial" font-size="12" text-anchor="middle">Utilities</text>
+  
+  <!-- Feature Modules Area -->
+  <rect x="270" y="150" width="360" height="380" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="5" />
+  <text x="450" y="170" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Feature Modules</text>
+  
+  <!-- Roster Management Module -->
+  <rect x="290" y="180" width="150" height="110" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="365" y="200" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">Roster Management</text>
+  <rect x="300" y="210" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="365" y="225" font-family="Arial" font-size="10" text-anchor="middle">Player Components</text>
+  <rect x="300" y="235" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="365" y="250" font-family="Arial" font-size="10" text-anchor="middle">Image Cropper</text>
+  <rect x="300" y="260" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="365" y="275" font-family="Arial" font-size="10" text-anchor="middle">Import Tool</text>
+  
+  <!-- Schedule Module -->
+  <rect x="460" y="180" width="150" height="110" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="535" y="200" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">Schedule Management</text>
+  <rect x="470" y="210" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="535" y="225" font-family="Arial" font-size="10" text-anchor="middle">Calendar View</text>
+  <rect x="470" y="235" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="535" y="250" font-family="Arial" font-size="10" text-anchor="middle">Game Form</text>
+  <rect x="470" y="260" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="535" y="275" font-family="Arial" font-size="10" text-anchor="middle">Schedule Import</text>
+  
+  <!-- Content Management Module -->
+  <rect x="290" y="300" width="150" height="110" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="365" y="320" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">Content Management</text>
+  <rect x="300" y="330" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="365" y="345" font-family="Arial" font-size="10" text-anchor="middle">Blog Editor</text>
+  <rect x="300" y="355" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="365" y="370" font-family="Arial" font-size="10" text-anchor="middle">Media Gallery</text>
+  <rect x="300" y="380" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="365" y="395" font-family="Arial" font-size="10" text-anchor="middle">Social Integration</text>
+  
+  <!-- Email/Notification Module -->
+  <rect x="460" y="300" width="150" height="110" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="535" y="320" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">Email Management</text>
+  <rect x="470" y="330" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="535" y="345" font-family="Arial" font-size="10" text-anchor="middle">Subscriber Manager</text>
+  <rect x="470" y="355" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="535" y="370" font-family="Arial" font-size="10" text-anchor="middle">Email Templates</text>
+  <rect x="470" y="380" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="535" y="395" font-family="Arial" font-size="10" text-anchor="middle">Campaign Analytics</text>
+  
+  <!-- Admin Module -->
+  <rect x="375" y="420" width="150" height="90" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="450" y="440" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">Admin Module</text>
+  <rect x="385" y="450" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="450" y="465" font-family="Arial" font-size="10" text-anchor="middle">User Management</text>
+  <rect x="385" y="475" width="130" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="2" />
+  <text x="450" y="490" font-family="Arial" font-size="10" text-anchor="middle">Team Settings</text>
+  
+  <!-- Service Layer -->
+  <rect x="80" y="410" width="180" height="120" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="5" />
+  <text x="170" y="430" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Service Layer</text>
+  <rect x="100" y="440" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="457" font-family="Arial" font-size="12" text-anchor="middle">Supabase Service</text>
+  <rect x="100" y="470" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="487" font-family="Arial" font-size="12" text-anchor="middle">Email Service</text>
+  <rect x="100" y="500" width="140" height="25" fill="#ffffff" stroke="#1976d2" stroke-width="1" rx="3" />
+  <text x="170" y="517" font-family="Arial" font-size="12" text-anchor="middle">Storage Service</text>
+  
+  <!-- BACKEND SECTION -->
+  <rect x="50" y="570" width="900" height="210" fill="#f1f8e9" stroke="#8bc34a" stroke-width="2" rx="5" />
+  <text x="500" y="595" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Backend Services</text>
+  
+  <!-- Supabase -->
+  <rect x="80" y="620" width="220" height="140" fill="#dcedc8" stroke="#689f38" stroke-width="2" rx="5" />
+  <text x="190" y="640" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Supabase</text>
+  <rect x="100" y="650" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="190" y="667" font-family="Arial" font-size="12" text-anchor="middle">Authentication</text>
+  <rect x="100" y="680" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="190" y="697" font-family="Arial" font-size="12" text-anchor="middle">PostgreSQL Database</text>
+  <rect x="100" y="710" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="190" y="727" font-family="Arial" font-size="12" text-anchor="middle">Storage (Images/Files)</text>
+  
+  <!-- Email Service -->
+  <rect x="320" y="620" width="220" height="140" fill="#dcedc8" stroke="#689f38" stroke-width="2" rx="5" />
+  <text x="430" y="640" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Email Service (SendGrid)</text>
+  <rect x="340" y="650" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="430" y="667" font-family="Arial" font-size="12" text-anchor="middle">Template Management</text>
+  <rect x="340" y="680" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="430" y="697" font-family="Arial" font-size="12" text-anchor="middle">Campaign Scheduling</text>
+  <rect x="340" y="710" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="430" y="727" font-family="Arial" font-size="12" text-anchor="middle">Analytics</text>
+  
+  <!-- Hosting/Infrastructure -->
+  <rect x="560" y="620" width="220" height="140" fill="#dcedc8" stroke="#689f38" stroke-width="2" rx="5" />
+  <text x="670" y="640" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Hosting/Infrastructure</text>
+  <rect x="580" y="650" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="670" y="667" font-family="Arial" font-size="12" text-anchor="middle">Static Hosting (Angular)</text>
+  <rect x="580" y="680" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="670" y="697" font-family="Arial" font-size="12" text-anchor="middle">CI/CD Pipeline</text>
+  <rect x="580" y="710" width="180" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="670" y="727" font-family="Arial" font-size="12" text-anchor="middle">Custom Domain Setup</text>
+  
+  <!-- Deployment Options -->
+  <rect x="800" y="620" width="130" height="140" fill="#dcedc8" stroke="#689f38" stroke-width="2" rx="5" />
+  <text x="865" y="640" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Deployment</text>
+  <rect x="810" y="660" width="110" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="865" y="677" font-family="Arial" font-size="12" text-anchor="middle">Current: Bluehost</text>
+  <rect x="810" y="690" width="110" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="865" y="707" font-family="Arial" font-size="12" text-anchor="middle">Option: Vercel</text>
+  <rect x="810" y="720" width="110" height="25" fill="#ffffff" stroke="#689f38" stroke-width="1" rx="3" />
+  <text x="865" y="737" font-family="Arial" font-size="12" text-anchor="middle">Option: Netlify</text>
+  
+  <!-- CLIENT SECTION -->
+  <rect x="670" y="100" width="280" height="450" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5" />
+  <text x="810" y="125" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Client View</text>
+  
+  <!-- Public Website -->
+  <rect x="690" y="150" width="240" height="140" fill="#ffe0b2" stroke="#f57c00" stroke-width="2" rx="5" />
+  <text x="810" y="170" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Public Website</text>
+  <rect x="710" y="180" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="197" font-family="Arial" font-size="12" text-anchor="middle">Team Info Pages</text>
+  <rect x="710" y="210" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="227" font-family="Arial" font-size="12" text-anchor="middle">Roster & Player Profiles</text>
+  <rect x="710" y="240" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="257" font-family="Arial" font-size="12" text-anchor="middle">Schedule & Game Results</text>
+  <rect x="710" y="270" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="287" font-family="Arial" font-size="12" text-anchor="middle">"On the Field" Blog</text>
+  
+  <!-- Admin Portal -->
+  <rect x="690" y="310" width="240" height="220" fill="#ffe0b2" stroke="#f57c00" stroke-width="2" rx="5" />
+  <text x="810" y="330" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Admin Portal</text>
+  <rect x="710" y="340" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="357" font-family="Arial" font-size="12" text-anchor="middle">Roster Management</text>
+  <rect x="710" y="370" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="387" font-family="Arial" font-size="12" text-anchor="middle">Image Upload & Cropping</text>
+  <rect x="710" y="400" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="417" font-family="Arial" font-size="12" text-anchor="middle">Schedule Management</text>
+  <rect x="710" y="430" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="447" font-family="Arial" font-size="12" text-anchor="middle">Blog Post Creation</text>
+  <rect x="710" y="460" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="477" font-family="Arial" font-size="12" text-anchor="middle">Email Campaign Management</text>
+  <rect x="710" y="490" width="200" height="25" fill="#ffffff" stroke="#f57c00" stroke-width="1" rx="3" />
+  <text x="810" y="507" font-family="Arial" font-size="12" text-anchor="middle">User Account Management</text>
+  
+  <!-- Connections -->
+  <!-- Core to Services -->
+  <path d="M170 270 L170 410" stroke="#1976d2" stroke-width="2" stroke-dasharray="5,5" />
+  <!-- Feature Modules to Services -->
+  <path d="M250 380 L260 480" stroke="#1976d2" stroke-width="2" stroke-dasharray="5,5" />
+  <!-- Services to Supabase -->
+  <path d="M170 530 L170 620" stroke="#689f38" stroke-width="2" stroke-dasharray="5,5" />
+  <!-- Services to Email -->
+  <path d="M210 530 L380 620" stroke="#689f38" stroke-width="2" stroke-dasharray="5,5" />
+  <!-- Angular to Static Hosting -->
+  <path d="M450 550 L650 650" stroke="#689f38" stroke-width="2" stroke-dasharray="5,5" />
+  <!-- Admin Portal to Feature Modules -->
+  <path d="M690 420 L630 380" stroke="#f57c00" stroke-width="2" stroke-dasharray="5,5" />
+  <!-- Public Website to Feature Modules -->
+  <path d="M690 220 L630 220" stroke="#f57c00" stroke-width="2" stroke-dasharray="5,5" />
+</svg>
