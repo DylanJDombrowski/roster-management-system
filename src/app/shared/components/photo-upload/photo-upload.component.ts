@@ -340,7 +340,6 @@ export class PhotoUploadComponent {
   }
 
   // Upload the selected photo
-  // In photo-upload.component.ts
   uploadPhoto(): void {
     if (!this.selectedFile || !this.playerId) return;
 
@@ -361,19 +360,14 @@ export class PhotoUploadComponent {
           clearInterval(progressInterval);
           this.uploadProgress = 100;
 
-          // Add the URL to the photo object
-          const photoWithUrl = {
-            ...photo,
-            url: this.playersService.getPhotoPublicUrl(photo.storage_path),
-          };
+          console.log('Uploaded photo:', photo);
+          console.log('Photo URL:', photo.url);
 
           setTimeout(() => {
             this.isUploading = false;
             this.selectedFile = null;
             this.previewUrl = null;
-
-            // Emit the enhanced photo object
-            this.photoUploaded.emit(photoWithUrl);
+            this.photoUploaded.emit(photo);
           }, 500);
         },
         error: (error) => {
@@ -430,12 +424,17 @@ export class PhotoUploadComponent {
 
   // Get the URL for a photo
   getPhotoUrl(photo: PlayerPhoto): string {
-    // In a real implementation, you would use the Supabase storage URL
-    // For now, we'll assume the photo has a URL property or fall back to a placeholder
-    if (photo.storage_path) {
-      // This would ideally use a method to get the public URL from the storage path
-      return photo.url || 'assets/placeholder-image.jpg';
+    // If the photo already has a URL (from our processing), use that
+    if (photo.url) {
+      return photo.url;
     }
-    return photo.url || 'assets/placeholder-image.jpg';
+
+    // Otherwise, get the URL from the storage path
+    if (photo.storage_path) {
+      return this.playersService.getPhotoPublicUrl(photo.storage_path);
+    }
+
+    // Fall back to a placeholder
+    return 'assets/placeholder-image.jpg';
   }
 }

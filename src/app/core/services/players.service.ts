@@ -1,5 +1,13 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, from, map, switchMap, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  from,
+  map,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { SupabaseService } from './supabase.service';
 import { Player, PlayerPhoto } from '../models/player.model';
 
@@ -126,7 +134,12 @@ export class PlayersService {
         if (error) {
           throw error;
         }
-        return data as PlayerPhoto[];
+
+        // Add URLs to the photos
+        return (data as PlayerPhoto[]).map((photo) => ({
+          ...photo,
+          url: this.getPhotoPublicUrl(photo.storage_path),
+        }));
       })
     );
   }
@@ -135,31 +148,46 @@ export class PlayersService {
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const fileName = `${playerId}/${Date.now()}-${sanitizedFileName}`;
 
+    console.log('Attempting to upload file:', fileName);
+    console.log('To bucket: player-photos');
+    console.log('File size:', file.size);
+
     return from(
       this.supabaseService.client.storage
         .from('player-photos')
         .upload(fileName, file)
     ).pipe(
+      tap((response) => {
+        console.log('Upload response:', response);
+        console.log('Upload error details:', response.error);
+        if (response.error) {
+          console.error('Upload failed:', response.error.message);
+          console.error('Error details:', response.error);
+        }
+      }),
       switchMap(({ data, error }) => {
         if (error) {
           throw error;
         }
+        // Store the path for later use
+        const storagePath = data?.path;
 
         // First get the user ID
         return from(this.supabaseService.client.auth.getUser()).pipe(
           switchMap((userData) => {
             const userId = userData.data.user?.id;
 
-            // Then insert the photo record
+            // Then insert the photo record - DON'T include url field
             return from(
               this.supabaseService.client
                 .from('player_photos')
                 .insert([
                   {
                     player_id: playerId,
-                    storage_path: data?.path,
+                    storage_path: storagePath,
                     is_primary: false,
                     uploaded_by: userId,
+                    // No url field since it doesn't exist in the database
                   },
                 ])
                 .select()
@@ -172,7 +200,37 @@ export class PlayersService {
         if (error) {
           throw error;
         }
-        return data as PlayerPhoto;
+
+        // Add the URL to the returned object (but don't store in DB)
+        const photoWithUrl = {
+          ...(data as PlayerPhoto),
+          url: this.getPhotoPublicUrl(data.storage_path),
+        };
+
+        return photoWithUrl;
+      })
+    );
+  }
+
+  getPrimaryPhotoUrl(playerId: string): Observable<string | null> {
+    return from(
+      this.supabaseService.client
+        .from('player_photos')
+        .select('storage_path')
+        .eq('player_id', playerId)
+        .eq('is_primary', true)
+        .single()
+    ).pipe(
+      map(({ data, error }) => {
+        if (error || !data) {
+          // Return placeholder if no primary photo exists
+          return 'assets/placeholder-image.jpg';
+        }
+        return this.getPhotoPublicUrl(data.storage_path);
+      }),
+      catchError(() => {
+        // Return placeholder on error
+        return from(Promise.resolve('assets/placeholder-image.jpg'));
       })
     );
   }
@@ -325,10 +383,7 @@ export class PlayersService {
   getPhotoPublicUrl(storagePath: string): string {
     if (!storagePath) return 'assets/placeholder-image.jpg';
 
-    const { data } = this.supabaseService.client.storage
-      .from('player-photos')
-      .getPublicUrl(storagePath);
-
-    return data?.publicUrl || 'assets/placeholder-image.jpg';
+    // Force the direct URL format that should work
+    return `https://cdcykkvxscyliiosrnwq.supabase.co/storage/v1/object/public/player-photos/${storagePath}`;
   }
 }

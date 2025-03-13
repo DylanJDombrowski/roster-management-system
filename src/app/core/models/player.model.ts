@@ -17,10 +17,10 @@ export interface Player {
   status: 'active' | 'inactive' | 'injured';
   created_at?: string;
   updated_at?: string;
+  photoUrl?: string;
 }
 
 export interface PlayerPhoto {
-  url: string;
   id: string;
   player_id: string;
   storage_path: string;
@@ -28,4 +28,5 @@ export interface PlayerPhoto {
   uploaded_by: string;
   created_at?: string;
   updated_at?: string;
+  url?: string;
 }

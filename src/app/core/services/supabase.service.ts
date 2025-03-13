@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 export class SupabaseService {
   private supabase: SupabaseClient;
 
+  // Add this debugging code to your SupabaseService constructor
   constructor() {
     console.log('Initializing Supabase client');
 
@@ -20,26 +21,27 @@ export class SupabaseService {
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
-          storage: localStorage, // Explicitly set to localStorage
+          storage: localStorage,
         },
       }
     );
 
-    // Check if we have a session at initialization
-    this.supabase.auth.getSession().then(({ data }) => {
-      console.log(
-        'Initial Supabase session check:',
-        data.session ? 'Session exists' : 'No session found'
-      );
-    });
+    // List all buckets to verify existence and access
+    this.supabase.storage.listBuckets().then(({ data, error }) => {
+      console.log('Available buckets:', data);
+      console.log('Bucket listing error:', error);
 
-    // Listen for auth changes
-    this.supabase.auth.onAuthStateChange((event, session) => {
-      console.log(
-        'Supabase auth state change:',
-        event,
-        session ? 'With session' : 'No session'
-      );
+      // Check if player-photos bucket exists
+      if (data) {
+        const playerPhotosBucket = data.find(
+          (bucket) => bucket.name === 'player-photos'
+        );
+        console.log('player-photos bucket found:', !!playerPhotosBucket);
+
+        if (playerPhotosBucket) {
+          console.log('Bucket details:', playerPhotosBucket);
+        }
+      }
     });
   }
 

@@ -162,6 +162,23 @@ export class PlayerListComponent implements OnInit {
   loadPlayers(): void {
     this.playersService.fetchPlayers().subscribe((players) => {
       this.players = players;
+
+      // Load player photos
+      this.players.forEach((player) => {
+        // Create a photoUrl property on the player objects if it doesn't exist
+        if (!('photoUrl' in player)) {
+          Object.defineProperty(player, 'photoUrl', {
+            value: null,
+            writable: true,
+            enumerable: true,
+          });
+        }
+
+        this.playersService.getPrimaryPhotoUrl(player.id).subscribe((url) => {
+          player.photoUrl = url ?? undefined;
+        });
+      });
+
       this.applyFilters();
     });
   }
