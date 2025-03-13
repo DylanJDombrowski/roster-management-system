@@ -383,6 +383,12 @@ export class PlayersService {
   getPhotoPublicUrl(storagePath: string): string {
     if (!storagePath) return 'assets/placeholder-image.jpg';
 
+    const { data } = this.supabaseService.client.storage
+      .from('player-photos')
+      .getPublicUrl(storagePath);
+
+    return data?.publicUrl || 'assets/placeholder-image.jpg';
+
     // Force the direct URL format that should work
     return `https://cdcykkvxscyliiosrnwq.supabase.co/storage/v1/object/public/player-photos/${storagePath}`;
   }

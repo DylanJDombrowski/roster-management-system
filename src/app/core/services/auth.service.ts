@@ -22,25 +22,45 @@ export class AuthService {
     private supabaseService: SupabaseService,
     private router: Router
   ) {
-    // Check for existing session on init
-    this.supabaseService.client.auth.getSession().then(({ data }) => {
-      if (data && data.session) {
-        this.fetchUserProfile(data.session.user.id);
-      }
-    });
+    console.log('AuthService initializing');
 
-    // Set up auth state change listener
-    this.supabaseService.client.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        this.fetchUserProfile(session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        this.currentUserSubject.next(null);
-        this.router.navigate(['/auth/login']);
-      }
-    });
+    // Initialize authentication state sequentially
+    this.initAuthState();
   }
 
-  private async fetchUserProfile(userId: string): Promise<void> {
+  private async initAuthState(): Promise<void> {
+    try {
+      // First check existing session
+      const { data } = await this.supabaseService.client.auth.getSession();
+
+      if (data?.session) {
+        console.log('Found existing session');
+        await this.fetchUserProfile(data.session.user.id);
+      } else {
+        console.log('No active session found');
+      }
+
+      // Then set up auth state change listener
+      this.supabaseService.client.auth.onAuthStateChange((event, session) => {
+        console.log('Auth state change:', event);
+
+        if (event === 'SIGNED_IN' && session) {
+          this.fetchUserProfile(session.user.id);
+        } else if (event === 'SIGNED_OUT') {
+          this.currentUserSubject.next(null);
+          this.router.navigate(['/auth/login']);
+        }
+      });
+    } catch (err) {
+      console.error('Error initializing auth state:', err);
+    }
+  }
+
+  private async fetchUserProfile(
+    userId: string,
+    retryCount = 0
+  ): Promise<void> {
+    const maxRetries = 3;
     console.log('Fetching profile for user ID:', userId);
 
     try {
@@ -109,9 +129,18 @@ export class AuthService {
       console.error('Unexpected error in fetchUserProfile:', err);
 
       // Only retry for lock errors
-      if (err.name === 'NavigatorLockAcquireTimeoutError') {
-        console.warn('Auth lock error occurred. Retrying...');
-        setTimeout(() => this.fetchUserProfile(userId), 500);
+      if (
+        err.name === 'NavigatorLockAcquireTimeoutError' &&
+        retryCount < maxRetries
+      ) {
+        console.warn(
+          `Auth lock error occurred. Retrying (${
+            retryCount + 1
+          }/${maxRetries})...`
+        );
+        // Exponential backoff
+        const delay = 500 * Math.pow(2, retryCount);
+        setTimeout(() => this.fetchUserProfile(userId, retryCount + 1), delay);
         return;
       }
 
