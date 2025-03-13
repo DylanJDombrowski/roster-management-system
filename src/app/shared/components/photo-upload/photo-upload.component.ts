@@ -375,7 +375,6 @@ export class PhotoUploadComponent {
           this.isUploading = false;
           this.uploadProgress = 0;
           console.error('Upload failed', error);
-          alert('Failed to upload photo. Please try again.');
         },
       });
   }

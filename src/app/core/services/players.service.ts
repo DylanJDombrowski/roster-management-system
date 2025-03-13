@@ -159,7 +159,6 @@ export class PlayersService {
     ).pipe(
       tap((response) => {
         console.log('Upload response:', response);
-        console.log('Upload error details:', response.error);
         if (response.error) {
           console.error('Upload failed:', response.error.message);
           console.error('Error details:', response.error);
@@ -172,26 +171,38 @@ export class PlayersService {
         // Store the path for later use
         const storagePath = data?.path;
 
-        // First get the user ID
-        return from(this.supabaseService.client.auth.getUser()).pipe(
-          switchMap((userData) => {
-            const userId = userData.data.user?.id;
+        // First check if this is the first photo for this player
+        return from(
+          this.supabaseService.client
+            .from('player_photos')
+            .select('id')
+            .eq('player_id', playerId)
+        ).pipe(
+          switchMap((existingPhotos) => {
+            const isFirstPhoto =
+              !existingPhotos.data || existingPhotos.data.length === 0;
 
-            // Then insert the photo record - DON'T include url field
-            return from(
-              this.supabaseService.client
-                .from('player_photos')
-                .insert([
-                  {
-                    player_id: playerId,
-                    storage_path: storagePath,
-                    is_primary: false,
-                    uploaded_by: userId,
-                    // No url field since it doesn't exist in the database
-                  },
-                ])
-                .select()
-                .single()
+            // Get the user ID
+            return from(this.supabaseService.client.auth.getUser()).pipe(
+              switchMap((userData) => {
+                const userId = userData.data.user?.id;
+
+                // Insert the photo record - set is_primary to true if it's the first photo
+                return from(
+                  this.supabaseService.client
+                    .from('player_photos')
+                    .insert([
+                      {
+                        player_id: playerId,
+                        storage_path: storagePath,
+                        is_primary: isFirstPhoto, // Set primary if it's the first photo
+                        uploaded_by: userId,
+                      },
+                    ])
+                    .select()
+                    .single()
+                );
+              })
             );
           })
         );
@@ -201,7 +212,7 @@ export class PlayersService {
           throw error;
         }
 
-        // Add the URL to the returned object (but don't store in DB)
+        // Add the URL to the returned object
         const photoWithUrl = {
           ...(data as PlayerPhoto),
           url: this.getPhotoPublicUrl(data.storage_path),
