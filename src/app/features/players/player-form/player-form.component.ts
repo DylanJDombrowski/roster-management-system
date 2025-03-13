@@ -12,6 +12,7 @@ import { PlayersService } from '../../../core/services/players.service';
 import { Player, PlayerPhoto } from '../../../core/models/player.model';
 import { PhotoUploadComponent } from '../../../shared/components/photo-upload/photo-upload.component';
 import { Subscription } from 'rxjs';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-player-form',
@@ -166,11 +167,15 @@ import { Subscription } from 'rxjs';
             <div class="form-row">
               <div class="form-group">
                 <label for="primary_position">Primary Position</label>
-                <input
-                  type="text"
+                <select
                   id="primary_position"
                   formControlName="primary_position"
-                />
+                >
+                  <option value="">-- Select Position --</option>
+                  <option *ngFor="let position of positions" [value]="position">
+                    {{ position }}
+                  </option>
+                </select>
               </div>
 
               <div class="form-group">
@@ -488,11 +493,26 @@ export class PlayerFormComponent implements OnInit, OnDestroy {
   newPlayerPhotoPreview: string | null = null;
   isDragging = false;
 
+  positions: string[] = [
+    'Pitcher',
+    'Catcher',
+    'First Base',
+    'Second Base',
+    'Third Base',
+    'Shortstop',
+    'Left Field',
+    'Center Field',
+    'Right Field',
+    'Designated Player',
+    'Utility',
+  ];
+
   constructor(
     private fb: FormBuilder,
     private playersService: PlayersService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private location: Location
   ) {
     this.playerForm = this.createForm();
   }
@@ -643,11 +663,12 @@ export class PlayerFormComponent implements OnInit, OnDestroy {
     const playerData = this.playerForm.value;
 
     if (this.isEdit && this.playerId) {
+      // Update existing player
       this.playersService.updatePlayer(this.playerId, playerData).subscribe({
         next: (player) => {
           this.isSubmitting = false;
-          // Simply redirect without alerts
-          this.router.navigate(['/players']);
+          // Go back to the previous page instead of showing an alert
+          this.location.back();
         },
         error: (err) => {
           console.error('Error saving player', err);
@@ -691,7 +712,7 @@ export class PlayerFormComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/players']);
+    this.location.back();
   }
 
   ngOnDestroy(): void {

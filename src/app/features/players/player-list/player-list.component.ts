@@ -56,6 +56,7 @@ import { AuthService } from '../../../core/services/auth.service';
         <app-player-card
           *ngFor="let player of filteredPlayers"
           [player]="player"
+          [photoUrl]="player.photoUrl ?? null"
         ></app-player-card>
       </div>
 
@@ -165,17 +166,9 @@ export class PlayerListComponent implements OnInit {
 
       // Load player photos
       this.players.forEach((player) => {
-        // Create a photoUrl property on the player objects if it doesn't exist
-        if (!('photoUrl' in player)) {
-          Object.defineProperty(player, 'photoUrl', {
-            value: null,
-            writable: true,
-            enumerable: true,
-          });
-        }
-
         this.playersService.getPrimaryPhotoUrl(player.id).subscribe((url) => {
-          player.photoUrl = url ?? undefined;
+          // Set the photoUrl property on the player object
+          player.photoUrl = url ?? '';
         });
       });
 
